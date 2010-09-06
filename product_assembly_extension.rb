@@ -83,7 +83,7 @@ class ProductAssemblyExtension < Spree::Extension
 
       def set_part_count(variant, count)
         ap = AssembliesPart.get(self.id, variant.id)
-        #unless ap.nil?
+        unless ap.nil?
         #  if count > 0
             ap.count = count
             ap.save
