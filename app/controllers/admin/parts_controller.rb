@@ -44,7 +44,7 @@ class Admin::PartsController < Admin::BaseController
   def create
     @part = Variant.find(params[:part_id])
     qty = params[:part_count].to_i
-    @product.add_part(@part, qty) if qty > 0
+    @product.add_part(@part, qty)
     render :update do |page|
       page.replace_html :product_parts, :partial => "parts_table",
                         :locals => {:parts => @product.parts}

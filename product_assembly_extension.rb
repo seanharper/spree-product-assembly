@@ -65,7 +65,7 @@ class ProductAssemblyExtension < Spree::Extension
           ap.save
         else
           self.parts << variant
-          set_part_count(variant, count) if count > 1
+          set_part_count(variant, count)
         end
       end
 
@@ -83,13 +83,13 @@ class ProductAssemblyExtension < Spree::Extension
 
       def set_part_count(variant, count)
         ap = AssembliesPart.get(self.id, variant.id)
-        unless ap.nil?
-          if count > 0
+        #unless ap.nil?
+        #  if count > 0
             ap.count = count
             ap.save
-          else
-            ap.destroy
-          end
+        #  else
+        #    ap.destroy
+        #  end
         end
       end
 
