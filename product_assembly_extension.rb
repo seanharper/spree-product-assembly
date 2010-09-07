@@ -73,10 +73,10 @@ class ProductAssemblyExtension < Spree::Extension
         ap = AssembliesPart.get(self.id, variant.id)
         unless ap.nil?
           ap.count -= 1
-          if ap.count > 0
-            ap.save
-          else
+          if ap.count == 0
             ap.destroy
+          else
+             ap.save
           end
         end
       end
