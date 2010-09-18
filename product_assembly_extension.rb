@@ -24,35 +24,52 @@ class ProductAssemblyExtension < Spree::Extension
             :join_table => "assemblies_parts",
             :foreign_key => "assembly_id", :association_foreign_key => "part_id"
 
+        has_and_belongs_to_many  :positive_parts, :class_name => "Variant",
+              :join_table => "assemblies_parts",
+              :foreign_key => "assembly_id", :association_foreign_key => "part_id", :conditions => ["count > 0"]
 
+        has_and_belongs_to_many  :negative_parts, :class_name => "Variant",
+              :join_table => "assemblies_parts",
+              :foreign_key => "assembly_id", :association_foreign_key => "part_id", :conditions => ["count < 0"]
+              
       named_scope :individual_saled, {
         :conditions => ["products.individual_sale = ?", true]
       }
-
+      
+      named_scope :nonbundles, { :conditions => [ 'assemblies_parts.count', '>0'], :include => :parts }
+        
       named_scope :active, lambda { |*args|
         not_deleted.individual_saled.available(args.first).scope(:find)
       }
+      
+      def breakapart?
+        return negative_parts.count > 0
+      end
 
 
       alias_method :orig_on_hand, :on_hand
       # returns the number of inventory units "on_hand" for this product
       def on_hand
         if self.assembly?
-          parts.map{|v| v.on_hand / self.count_of(v) }.min
+          if self.breakapart? && self.orig_on_hand > 0
+            return self.orig_on_hand 
+          else
+            positive_parts.map{|v| v.on_hand / self.count_of(v) }.min
+          end
         else
           self.orig_on_hand
         end
       end
 
-      alias_method :orig_on_hand=, :on_hand=
-      def on_hand=(new_level)
-        self.orig_on_hand=(new_level) unless self.assembly?
-      end
+      #alias_method :orig_on_hand=, :on_hand=
+      #def on_hand=(new_level)
+      #  self.orig_on_hand=(new_level) unless self.assembly?
+      #end
 
       alias_method :orig_has_stock?, :has_stock?
       def has_stock?
         if self.assembly?
-          !parts.detect{|v| self.count_of(v) > v.on_hand}
+          !positive_parts.detect{|v| self.count_of(v) > v.on_hand}
         else
           self.orig_has_stock?
         end
@@ -60,36 +77,35 @@ class ProductAssemblyExtension < Spree::Extension
 
       def add_part(variant, count = 1)
         ap = AssembliesPart.get(self.id, variant.id)
-        unless ap.nil?
-          ap.count += count
-          ap.save
-        else
-          self.parts << variant
-          set_part_count(variant, count)
-        end
+        #if !self.contains?([variant.product]) && !variant.product.recursive?
+          unless ap.nil?
+            ap.count += count
+            ap.save
+          else
+            self.parts << variant
+            set_part_count(variant, count)
+          end
+        #else
+         # flash[:notice]= 'Cannot add a recursive product'
+        #end
       end
 
       def remove_part(variant)
         ap = AssembliesPart.get(self.id, variant.id)
         unless ap.nil?
-          ap.count -= 1
-          if ap.count == 0
-            ap.destroy
-          else
-             ap.save
-          end
+          ap.destroy
         end
       end
 
       def set_part_count(variant, count)
         ap = AssembliesPart.get(self.id, variant.id)
         unless ap.nil?
-        #  if count > 0
+          if count == 0
+            ap.destroy
+          else
             ap.count = count
             ap.save
-        #  else
-        #    ap.destroy
-        #  end
+          end
         end
       end
 

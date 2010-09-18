@@ -12,7 +12,12 @@
     <% parts.each do |part| %>
       <tr id="<%= dom_id(part, :sel)%>">
         <td><%= part.sku %></td>
-        <td><%= part.product.name %></td>
+        <td> <%= link_to part.product.name, edit_admin_product_url(part.product) %> (on hand <%= part.product.on_hand%>)
+          <%if part.product.recursive? %>
+            <br>recursive -- not good
+          <%end%>
+        </td>
+        </td>
         <td><%= variant_options part %></td>
         <td><%= text_field_tag :count, @product.count_of(part) %></td>
   	    <td class="actions">
