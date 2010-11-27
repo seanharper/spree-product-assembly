@@ -46,6 +46,9 @@ class ProductAssemblyExtension < Spree::Extension
         return negative_parts.count > 0
       end
 
+      def limiting_reactant
+        return positive_parts.sort{|x,y| x.on_hand <=> y.on_hand }[0]
+      end
 
       alias_method :orig_on_hand, :on_hand
       # returns the number of inventory units "on_hand" for this product

@@ -1,0 +1,26 @@
+<h2>This Product Is Contained within the Following Bundles</h2>
+<table class="index">
+  <thead>
+  	<tr>
+  	  <th><%= t("sku") %></th>
+  		<th><%= t("name") %></th>
+  		<th><%= t("qty") %></th>
+  	</tr>
+  </thead>
+  <tbody>
+    <% assemblies.each do |product| %>
+      <tr id="<%= dom_id(product, :sel)%>">
+        <td><%= product.master.sku %></td>
+        <td> <%= link_to product.name, edit_admin_product_url(product) %> (on hand <%= product.on_hand%>)
+        </td>
+        <td><%= product.count_of(@product)%> </td>
+  	    <td class="actions">         
+  	    </td>        
+      </tr>
+    <% end %>
+    <% if assemblies.empty? %>
+     <tr><td colspan="3"><%= t('none') %>.</td></tr>
+    <% end %>
+  </tbody>
+</table>
+<%= javascript_tag("subscribe_product_assembly_links();") if request.xhr? %>

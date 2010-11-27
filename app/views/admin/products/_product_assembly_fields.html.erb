@@ -7,12 +7,29 @@
   <%= f.check_box(:individual_sale) %>
 </p>
 
-<% if @product.assembly?  && !@product.breakapart?  %>
-  <% content_for :head do %>
-    <script type="text/javascript">
-      jQuery(document).ready(function(){
-        $("input[id='product_on_hand']").disable().parent().hide();
-      });
-    </script>
-  <% end %>
-<% end %>
+
+
+
+<p>
+  <% if @product.assembly? %>
+    <% if @product.breakapart?  %>
+      This is a breakapart bundle, so it can have inventory of it's own. 
+      Right now it has <%= f.text_field :on_hand, :size => 4 %>.  But if we run out of those
+      we have <%=@product.on_hand%> from the <%= link_to @product.limiting_reactant.name, edit_admin_product_url(@product.limiting_reactant) %> that we can break apart.
+    <%else%>
+      This is a regular bundle, so it doesn't have any inventory of it's own. Based upon the inventory of the items contained within this bundle, we have <b><%=@product.on_hand%></b> available to sell. The limiting reactant is <%= link_to @product.limiting_reactant.name, edit_admin_product_url(@product.limiting_reactant) %>
+      
+      <% content_for :head do %>
+        <script type="text/javascript">
+          jQuery(document).ready(function(){
+            $("input[id='product_on_hand']").disable().parent().hide();
+          });
+        </script>
+      <% end %>
+      
+    <%end%>
+  <%else%>
+    
+  <%end%>
+    
+</p>
