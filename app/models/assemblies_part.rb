@@ -6,6 +6,7 @@ class AssembliesPart < ActiveRecord::Base
 	named_scope :positive, {
      :conditions => ["count > 0"]
   }
+  
 	
 	def self.get(assembly_id, part_id)
 	  AssembliesPart.find_by_assembly_id_and_part_id(assembly_id, part_id)

@@ -34,9 +34,13 @@ class ProductAssemblyExtension < Spree::Extension
               
       named_scope :individual_saled, {
         :conditions => ["products.individual_sale = ?", true]
-      }
+      }       
+       
+       
+      named_scope :nonbundles, { :conditions => [ 'assemblies_parts.assembly_id is null'], :include => :parts }
+      named_scope :bundles, { :conditions => [ 'assemblies_parts.count=?', '1'], :include => :parts }
+      named_scope :breakaparts,  { :conditions => [ 'assemblies_parts.count=?', '-1'], :include => :parts }
       
-      named_scope :nonbundles, { :conditions => [ 'assemblies_parts.count', '>0'], :include => :parts }
         
       named_scope :active, lambda { |*args|
         not_deleted.individual_saled.available(args.first).scope(:find)
@@ -64,15 +68,20 @@ class ProductAssemblyExtension < Spree::Extension
         end
       end
 
-      #alias_method :orig_on_hand=, :on_hand=
-      #def on_hand=(new_level)
-      #  self.orig_on_hand=(new_level) unless self.assembly?
-      #end
+      alias_method :orig_on_hand=, :on_hand=
+      def on_hand=(new_level)
+        self.orig_on_hand=(new_level) unless self.assembly?
+        
+      end
 
       alias_method :orig_has_stock?, :has_stock?
       def has_stock?
         if self.assembly?
-          !positive_parts.detect{|v| self.count_of(v) > v.on_hand}
+          if self.breakapart? && self.orig_on_hand > 0
+            self.orig_has_stock?
+          else
+            !positive_parts.detect{|v| self.count_of(v) > v.on_hand}
+          end
         else
           self.orig_has_stock?
         end
@@ -131,16 +140,18 @@ class ProductAssemblyExtension < Spree::Extension
       def self.sell_units(order)
         # we should not already have inventory associated with the order at this point but we should clear to be safe (#1394)
         order.inventory_units.destroy_all
-        
         out_of_stock_items = []
         order.line_items.each do |line_item|
           variant = line_item.variant
           quantity = line_item.quantity
           product = variant.product
-
           if product.assembly?
-            product.parts.each do |v|
-              out_of_stock_items += self.mark_units_as_sold(order, v, quantity * product.count_of(v))
+            if product.breakapart? && product.orig_on_hand > 0
+              out_of_stock_items += self.mark_units_as_sold(order, variant, quantity)
+            else
+              product.parts.each do |v|
+                out_of_stock_items += self.mark_units_as_sold(order, v, quantity * product.count_of(v))
+              end
             end
           else
             out_of_stock_items += self.mark_units_as_sold(order, variant, quantity)
@@ -149,16 +160,14 @@ class ProductAssemblyExtension < Spree::Extension
         out_of_stock_items.flatten
       end
 
-      private
+      #private
 
       def self.mark_units_as_sold(order, variant, quantity)
         out_of_stock_items = []
         #Force reload in case of ReadOnly and too ensure correct onhand values
         variant = Variant.find(variant.id)
-
         # mark all of these units as sold and associate them with this order
         remaining_quantity = variant.count_on_hand - quantity
-
         if (remaining_quantity >= 0)
           quantity.times do
             order.inventory_units.create(:variant => variant, :state => "sold")
