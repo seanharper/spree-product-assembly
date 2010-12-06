@@ -51,7 +51,7 @@ class ProductAssemblyExtension < Spree::Extension
       end
 
       def limiting_reactant
-        return positive_parts.sort{|x,y| x.on_hand <=> y.on_hand }[0]
+        return positive_parts.sort{|x,y| x.product.on_hand <=> y.product.on_hand }[0].product
       end
 
       alias_method :orig_on_hand, :on_hand
@@ -80,7 +80,7 @@ class ProductAssemblyExtension < Spree::Extension
           if self.breakapart? && self.orig_on_hand > 0
             self.orig_has_stock?
           else
-            !positive_parts.detect{|v| self.count_of(v) > v.on_hand}
+            !positive_parts.detect{|v| self.count_of(v) > v.product.on_hand}
           end
         else
           self.orig_has_stock?
