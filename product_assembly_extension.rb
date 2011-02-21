@@ -97,7 +97,16 @@ class ProductAssemblyExtension < Spree::Extension
       end
 
       def limiting_reactant
-        return positive_parts.sort{|x,y| x.product.on_hand <=> y.product.on_hand }[0].product
+        if (positive_parts.size <= 0)
+           return nil
+        else
+          first = positive_parts.sort{|x,y| x.product.on_hand <=> y.product.on_hand }[0]
+          if (first.nil?)
+            return nil
+          else
+            return first.product
+          end
+        end
       end
 
       alias_method :orig_on_hand, :on_hand
@@ -111,7 +120,7 @@ class ProductAssemblyExtension < Spree::Extension
           end
         elsif self.variants.count > 0
           main_var = self.variants.find(:first, :conditions => ["sku = ?",self.sku])
-          !main_var.nil? ? main_var.on_hand : self.orig_on_hand
+          main_var.nil? ? main_var.on_hand : self.orig_on_hand
         else
           self.orig_on_hand
         end

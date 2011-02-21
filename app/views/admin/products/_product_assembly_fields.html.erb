@@ -19,7 +19,7 @@
         This item is a breakapart but it doesn't have a positive item to subtract from -- VERY bad.  Please fix.
       <%else%>
         But if we run out of those
-      we have <%=@product.limiting_reactant.on_hand%> from the <%= link_to @product.limiting_reactant.product.name, edit_admin_product_url(@product.limiting_reactant.product) %> that we can break apart.
+      we have <%=@product.limiting_reactant.on_hand%> from the <%= link_to @product.limiting_reactant.name, edit_admin_product_url(@product.limiting_reactant) %> that we can break apart.
       <%end%>
       
       <% content_for :head do %>
