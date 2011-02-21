@@ -14,6 +14,50 @@ class ProductAssemblyExtension < Spree::Extension
 
   def activate
 
+    Variant.class_eval do
+      has_and_belongs_to_many  :assemblies, :class_name => "Product",
+            :join_table => "assemblies_parts",
+            :foreign_key => "part_id", :association_foreign_key => "assembly_id"
+
+      def translate_bundles_i_am_contained_within_into_taxons2
+        print "ok, about to blow out " + self.name + " / " + self.permalink + " which currently has " + self.assemblies.count.to_s + " assemblies \n\r"
+        assemblies.each {|a|
+          #copy into the right taxons
+          pt = ProductsTaxon.new(:product_id => self.product.id, :taxon_id => a.taxons[0].id, :name2 => a.name)
+          pt.save
+          print " added myself to taxon: " + a.taxons[0].name + "\n\r"
+          print " a only has " + a.taxons.count.to_s + " taxons, good\n\r"
+          print " giving myself in that taxon " + a.name + " name\n\r"
+
+          pp = ProductProperty.find(:first,:conditions => ["property_id = ? && product_id = ?",a.properties.find_by_name("car_make"),a.id])
+          make = !pp.nil? ? pp.value : ""
+          pp = ProductProperty.find(:first,:conditions => ["property_id = ? && product_id = ?",a.properties.find_by_name("car_model"),a.id])
+          model = !pp.nil? ? pp.value : ""
+          pp = ProductProperty.find(:first,:conditions => ["property_id = ? && product_id = ?",a.properties.find_by_name("car_start_year"),a.id])
+          car_start_year = !pp.nil? ? pp.value : ""
+          pp = ProductProperty.find(:first,:conditions => ["property_id = ? && product_id = ?",a.properties.find_by_name("car_end_year"),a.id])
+          car_end_year = !pp.nil? ? pp.value : ""
+          self.hidden = false
+          self.save
+          c = Car.new(:make => make, :model => model, :start_year => car_start_year, :end_year => car_end_year)
+          c.save
+          self.product.cars << c
+          #then soft delete it.
+          print " now killing my assemblies \n\r"
+          pk = Product.find(a.id)
+          pk.deleted_at = Time.now()
+          pk.save
+          pk.variants.each do |v|
+            v.deleted_at = Time.now()
+            v.save
+          end
+          #and remove the assembly
+           a2 = AssembliesPart.get(a.id,self.id)
+           a2.destroy
+        }
+      end
+    end
+
     Product.class_eval do
 
       has_and_belongs_to_many  :assemblies, :class_name => "Product",
@@ -45,6 +89,8 @@ class ProductAssemblyExtension < Spree::Extension
       named_scope :active, lambda { |*args|
         not_deleted.individual_saled.available(args.first).scope(:find)
       }
+
+
       
       def breakapart?
         return negative_parts.count > 0
@@ -63,6 +109,9 @@ class ProductAssemblyExtension < Spree::Extension
           else
             positive_parts.map{|v| v.on_hand / self.count_of(v) }.min
           end
+        elsif self.variants.count > 0
+          main_var = self.variants.find(:first, :conditions => ["sku = ?",self.sku])
+          main_var.nil? ? main_var.on_hand : self.orig_on_hand
         else
           self.orig_on_hand
         end

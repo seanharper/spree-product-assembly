@@ -3,7 +3,8 @@ class Admin::AssembliesController < Admin::BaseController
   before_filter :find_product
 
   def index
-    @assemblies = @product.assemblies
+    @assemblies = @product.assemblies + @product.vassemblies
+    
   end
 
   private
