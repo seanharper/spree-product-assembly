@@ -19,7 +19,7 @@
         This item is a breakapart but it doesn't have a positive item to subtract from -- VERY bad.  Please fix.
       <%else%>
         But if we run out of those
-      we have <%=@product.limiting_reactant.on_hand%> from the <%= link_to @product.limiting_reactant.name, edit_admin_product_url(@product.limiting_reactant) %> that we can break apart.
+      we have <%=@product.limiting_reactant.on_hand%> from the <%= link_to @product.limiting_reactant.product.name, edit_admin_product_url(@product.limiting_reactant.product) %> that we can break apart.
       <%end%>
       
       <% content_for :head do %>
@@ -31,7 +31,7 @@
       <% end %>
       
     <%else%>
-      This is a regular bundle, so it doesn't have any inventory of it's own. Based upon the inventory of the items contained within this bundle, we have <b><%=@product.limiting_reactant.on_hand%></b> available to sell. The limiting reactant is <%= link_to @product.limiting_reactant.name, edit_admin_product_url(@product.limiting_reactant) %>
+      This is a regular bundle, so it doesn't have any inventory of it's own. Based upon the inventory of the items contained within this bundle, we have <b><%=@product.limiting_reactant.product.on_hand%></b> available to sell. The limiting reactant is <%= link_to @product.limiting_reactant.product.name, edit_admin_product_url(@product.limiting_reactant.product) %>
       <% content_for :head do %>
         <script type="text/javascript">
           jQuery(document).ready(function(){
