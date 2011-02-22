@@ -31,7 +31,7 @@
       <% end %>
       
     <%else%>
-      This is a regular bundle, so it doesn't have any inventory of it's own. Based upon the inventory of the items contained within this bundle, we have <b><%=@product.limiting_reactant.product.on_hand%></b> available to sell. The limiting reactant is <%= link_to @product.limiting_reactant.product.name, edit_admin_product_url(@product.limiting_reactant.product) %>
+      This is a regular bundle, so it doesn't have any inventory of it's own. Based upon the inventory of the items contained within this bundle, we have <b><%=@product.limiting_reactant.on_hand%></b> available to sell. The limiting reactant is <%= link_to @product.limiting_reactant.name, edit_admin_product_url(@product.limiting_reactant) %>
       <% content_for :head do %>
         <script type="text/javascript">
           jQuery(document).ready(function(){
