@@ -120,7 +120,7 @@ class ProductAssemblyExtension < Spree::Extension
           end
         elsif self.variants.count > 0
           main_var = self.variants.find(:first, :conditions => ["sku = ?",self.sku])
-          main_var.nil? ? main_var.on_hand : self.orig_on_hand
+          !main_var.nil? ? main_var.on_hand : self.orig_on_hand
         else
           self.orig_on_hand
         end
